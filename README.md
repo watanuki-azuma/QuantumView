@@ -38,6 +38,9 @@ Rust 1.99.1で依存関係を解決しました。エンジンの直接依存は
 
 - `servo-paint-api 0.7.0`: WindowsのOpenGL初期化パニックに対する[Servo公式の初期化順序の修正](https://github.com/servo/servo/commit/16e4b1591e1fa4a47016643e34d4f259185c5f2f)。
 - `servo-script 0.7.0`: 未確定文字をBackspaceで空にした際、その更新が無視されて表示が残る問題への[1ファイルの修正](probes/servo/vendor/servo-script/README.quantumview.md)。
+- `servo-paint 0.7.0`: 段階的に動くホイール入力を、[既存の描画タイミングで120msに分けて適用する修正](probes/servo/vendor/servo-paint/README.quantumview.md)。
+
+最新のスクロール修正版には実機で移動量不足の報告があり、改善は未完了です。現在の状態と再開時の注意点は[handoff](HANDOFF.md)に記録しています。
 
 LLVMの標準インストール先が`C:\Program Files\LLVM`の場合、リポジトリのルートで以下を実行します。Pythonの実体がPATHに含まれていることも確認してください。各アプリは1つずつ起動します。
 

@@ -227,21 +227,17 @@ impl ApplicationHandler<Wake> for App {
                 )));
             }
             WindowEvent::MouseWheel { delta, .. } => {
-                // Winit line deltas are converted to physical pixels, as in servoshell.
-                let scale = state.delegate.window.scale_factor();
-                let (x, y) = match delta {
+                // Keep discrete line input separate from a trackpad's pixel input.
+                let (x, y, mode) = match delta {
                     MouseScrollDelta::LineDelta(x, y) => {
-                        (f64::from(x) * 40.0 * scale, f64::from(y) * 40.0 * scale)
+                        (f64::from(x), f64::from(y), WheelMode::DeltaLine)
                     }
-                    MouseScrollDelta::PixelDelta(delta) => (delta.x, delta.y),
+                    MouseScrollDelta::PixelDelta(delta) => {
+                        (delta.x, delta.y, WheelMode::DeltaPixel)
+                    }
                 };
                 webview.notify_input_event(InputEvent::Wheel(WheelEvent::new(
-                    WheelDelta {
-                        x,
-                        y,
-                        z: 0.0,
-                        mode: WheelMode::DeltaPixel,
-                    },
+                    WheelDelta { x, y, z: 0.0, mode },
                     state.mouse_position.into(),
                 )));
             }
