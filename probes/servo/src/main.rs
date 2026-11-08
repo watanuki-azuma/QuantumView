@@ -269,11 +269,8 @@ impl ApplicationHandler<Wake> for App {
                     }
                     Ime::Disabled => {
                         state.composing = false;
-                        // Servo also disables the IME when focus moves. Only a user
-                        // dismissal should blur the currently focused editor.
-                        if state.delegate.input_method.take().is_some() {
-                            webview.notify_input_event(InputEvent::Ime(ImeEvent::Dismissed));
-                        }
+                        // On Windows this also follows a normal composition commit.
+                        // It must not dismiss the editor or clear its focus.
                         None
                     }
                 };
