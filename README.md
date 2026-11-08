@@ -24,16 +24,28 @@ measurements/      実測結果の記録先
 
 ## Windowsで起動する
 
-この試作の比較対象はWindows x64です。Rustとネイティブビルド環境が必要です。MSVC環境ではVisual Studio 2022のC++ x64/x86ビルドツール、Windows SDKを用意し、Developer PowerShellから実行してください。Servoには追加のネイティブ依存があります。[Servo 0.7.0のWindows手順](https://github.com/servo/servo/blob/v0.7.0/README.md#windows)（ATL、`mach bootstrap`）に従って準備します。[Servo Book](https://book.servo.org/building/building.html)も参照してください。
+この試作の比較対象はWindows x64です。RustのMSVC版、Visual Studio 2022のC++ x64/x86ビルドツール・ATL・Windows SDK、LLVM、Python 3.11以降を用意し、新しく開いたDeveloper PowerShellから実行してください。WindowsAppsのPythonエイリアスだけではコード生成を実行できません。[Servo 0.7.0のWindows手順](https://github.com/servo/servo/blob/v0.7.0/README.md#windows)と[Servo Book](https://book.servo.org/building/building.html)も参照してください。
+
+GNU版Rustを使っている場合は、既存の設定を残してMSVC版を追加できます。
+
+```powershell
+rustup toolchain install stable-x86_64-pc-windows-msvc --profile minimal
+```
 
 Rust 1.99.1で依存関係を解決しました。エンジンの直接依存は完全一致の版指定、推移依存は各`Cargo.lock`で固定しています。Servo 0.7.0公式の基準ツールチェーンは1.97.1ですが、このロックファイル全体を1.97.1では検証していません。全構成の検証状況は[検証記録](docs/validation.md)を確認してください。
 
-リポジトリのルートで、1つずつ実行します。
+WindowsのOpenGL初期化で起きたパニックを直すため、`servo-paint-api 0.7.0`だけを`probes/servo/vendor/`に置き、[Servo公式の初期化順序の修正](https://github.com/servo/servo/commit/16e4b1591e1fa4a47016643e34d4f259185c5f2f)を適用しています。エンジンの版と描画方式は維持しています。
+
+LLVMの標準インストール先が`C:\Program Files\LLVM`の場合、リポジトリのルートで以下を実行します。Pythonの実体がPATHに含まれていることも確認してください。各アプリは1つずつ起動します。
 
 ```powershell
-cargo run --release --locked --manifest-path probes/servo/Cargo.toml
-cargo run --release --locked --manifest-path probes/blitz/Cargo.toml
-cargo run --release --locked --manifest-path probes/webview2/Cargo.toml
+$env:PATH = 'C:\Program Files\LLVM\bin;' + $env:PATH
+$env:LIBCLANG_PATH = 'C:\Program Files\LLVM\bin'
+$env:CC = 'clang-cl'
+$env:CXX = 'clang-cl'
+cargo +stable-x86_64-pc-windows-msvc run --release --locked --manifest-path probes/servo/Cargo.toml
+cargo +stable-x86_64-pc-windows-msvc run --release --locked --manifest-path probes/blitz/Cargo.toml
+cargo +stable-x86_64-pc-windows-msvc run --release --locked --manifest-path probes/webview2/Cargo.toml
 ```
 
 WebView2版には[WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)が必要です。GNU向けビルドでは、取得済み`webview2-com-sys`クレートの`x64/WebView2Loader.dll`も実行ファイルの隣に配置します（MSVC版は静的リンク）。ServoとWebView2はソースツリー内の`ui/index.html`を`file://`で読みます。実行ファイルだけの配布にはまだ対応していません。BlitzはCSSをビルド時に取り込むので、CSS変更後は再ビルドします。

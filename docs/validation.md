@@ -2,14 +2,37 @@
 
 実施日: 2026-11-08（日本時間）。これは初期試作の検証記録です。全構成の動作保証や性能比較の完了を示すものではありません。
 
-## 環境
+## 追加したWindowsビルド環境
+
+初回のGNU環境での停止後、以下をインストールし、それぞれ実行・検出できることを確認しました。再起動は不要でした。
+
+- Visual Studio Build Tools 2022 17.14.44: MSVC v143（14.44）、ATL、Windows SDK 10.0.26100.0、CMake 3.31.6とNinja。
+- LLVM 23.1.5（`clang-cl`、`libclang.dll`）。
+- Python 3.13.17。
+- Rust / Cargo 1.99.1の`stable-x86_64-pc-windows-msvc`ツールチェーン。
+
+既存のGNUツールチェーンとデフォルト設定は保持しています。MSVCのDeveloper PowerShell環境で、LLVMとPythonの実体をPATHへ追加し、`LIBCLANG_PATH`・`PYTHON`・`PYTHON3`・`CC=clang-cl`・`CXX=clang-cl`をビルドプロセス内で設定します。実行コマンドは[README](../README.md#windowsで起動する)に記載しています。
+
+## MSVCでのビルドとOpenGL初期化の修正
+
+元の依存構成で`cargo +stable-x86_64-pc-windows-msvc build --release --locked -j 2 --manifest-path probes/servo/Cargo.toml`が成功しました。初回ビルド時間は29分51秒で、アプリ本体のコンパイルとリンクまで完了しています。
+
+起動時には`glow`が`GL_VERSION`を読み取る際にパニックになりました。これはOpenGLコンテキストをcurrentにする前にGL関数を読み込むServo 0.7.0側の初期化順序の問題で、[上流コミット16e4b15（#48636）](https://github.com/servo/servo/commit/16e4b1591e1fa4a47016643e34d4f259185c5f2f)に同じ問題の修正があります。
+
+その修正のみを`probes/servo/vendor/servo-paint-api`へ取り込み、Cargoの`[patch.crates-io]`で適用しました。公開API・描画方式・Servoの固定版は変更していません。公開クレートとの比較で、Rustソースの変更は上流と同じ初期化順序の修正だけであることを確認しています。
+
+修正適用後の`--release --locked -j 2`ビルドも成功しました（再ビルド10分29秒）。実行時のOpenGLパニックは解消し、`QuantumView - Servo`ウィンドウが生成され、プロセスが継続して動くことを確認しました。Alt+F4で終了し、終了コード0になることも確認しました。
+
+Windows操作ヘルパーの画面取得は`FrameArrived timed out`で失敗したため、描画の外観と日本語IMEの動作は未確認です。起動ログにはGPU選択シンボル、最適化シェーダー、ClientStorage用一時DB作成についての警告があり、終了時にはメモリープロファイラーの切断警告も出ています。これらの影響と永続化は今回の起動確認では評価していません。
+
+## 初回検証の環境
 
 - Windows x64、Rust / Cargo 1.99.1、`x86_64-pc-windows-gnu`。
 - 元の環境にはC/C++コンパイラーとMSVCビルドツールがありません。
 - 検証用にGNU binutilsを作業フォルダーへ展開。システム設定とリポジトリのビルド設定は変更していません。
 - ビルドと画面操作の確認中は他のビルドも動いていたため、性能測定の条件として使いません。
 
-## ビルドと静的確認
+## 初回GNU環境でのビルドと静的確認
 
 | 確認 | Servo | Blitz | WebView2 |
 | --- | --- | --- | --- |
@@ -52,4 +75,4 @@ GNU版では`WebView2Loader.dll`が必要でした。取得済み`webview2-com-s
 
 ## 残っている実機確認
 
-Servoのネイティブビルド完了、全構成の日本語IME変換・候補位置・メモ帳とのクリップボード交換・スクロール・リサイズ・DPI、統一条件でのコールド起動・メモリ・CPU・GPUメモリの測定が残っています。手順は[比較手順](comparison.md)、結果の記録先は[実測表](../measurements/README.md)です。現時点でどちらの候補が軽いかは結論を出していません。
+全構成の描画の外観・日本語IME変換・候補位置・メモ帳とのクリップボード交換・スクロール・リサイズ・DPI、統一条件でのコールド起動・メモリ・CPU・GPUメモリの測定が残っています。手順は[比較手順](comparison.md)、結果の記録先は[実測表](../measurements/README.md)です。現時点でどちらの候補が軽いかは結論を出していません。
