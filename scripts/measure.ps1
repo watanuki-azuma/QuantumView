@@ -32,7 +32,14 @@ function Get-ProbeSnapshot {
         $privateBytes += $process.PrivateMemorySize64
         $workingSet += $process.WorkingSet64
     }
-    [pscustomobject]@{ Cpu = $cpu; PrivateBytes = $privateBytes; WorkingSet = $workingSet }
+    $gpuMemory = @(Get-CimInstance Win32_PerfFormattedData_GPUPerformanceCounters_GPUProcessMemory |
+        Where-Object { $_.Name -match '^pid_(\d+)_' -and $probeIds.Contains([int]$Matches[1]) })
+    $gpuDedicated = if ($gpuMemory.Count) { ($gpuMemory | Measure-Object DedicatedUsage -Sum).Sum } else { $null }
+    $gpuShared = if ($gpuMemory.Count) { ($gpuMemory | Measure-Object SharedUsage -Sum).Sum } else { $null }
+    [pscustomobject]@{
+        Cpu = $cpu; PrivateBytes = $privateBytes; WorkingSet = $workingSet
+        GpuDedicated = $gpuDedicated; GpuShared = $gpuShared
+    }
 }
 
 $previous = Get-ProbeSnapshot
@@ -59,6 +66,8 @@ while ($timer.Elapsed.TotalSeconds -lt $Seconds) {
         ProcessCount = $current.Cpu.Count
         PrivateMiB = [Math]::Round($current.PrivateBytes / 1MB, 3)
         WorkingSetMiB = [Math]::Round($current.WorkingSet / 1MB, 3)
+        GpuDedicatedMiB = if ($null -ne $current.GpuDedicated) { [Math]::Round($current.GpuDedicated / 1MB, 3) } else { $null }
+        GpuSharedMiB = if ($null -ne $current.GpuShared) { [Math]::Round($current.GpuShared / 1MB, 3) } else { $null }
         CpuOneCorePercent = $cpuPercent
         ProcessSetChanged = $changed
     })

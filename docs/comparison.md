@@ -53,6 +53,7 @@ Windowsを**再起動**し、起動後の待機時間を毎回そろえて、対
 | `PrivateMiB` | プロセス群のPrivate Bytes（プライベートコミット）の合計。物理RAM量ではない |
 | `WorkingSetMiB` | プロセス群のWorking Set合計。共有ページの重複を含み、システム全体のRAM増分とは異なる |
 | `CpuOneCorePercent` | サンプル間のCPU時間差÷実際の経過時間×100。100%は論理CPU1個分。タスクマネージャーの全CPU基準%とは異なる |
+| `GpuDedicatedMiB` / `GpuSharedMiB` | プロセス群のGPU専用/共有メモリ合計。対応するGPUカウンターがない場合は空欄 |
 | `ProcessCount` | そのサンプルで読み取ったプロセス数 |
 | `ProcessSetChanged` | プロセスの増減があったか。trueの行はCPU値を空欄にする |
 
@@ -60,7 +61,7 @@ Windowsを**再起動**し、起動後の待機時間を毎回そろえて、対
 
 ## GPUメモリ
 
-タスクマネージャーの「詳細」で「専用GPUメモリ」「共有GPUメモリ」の列を表示し、CSVと同じPID群について、アイドル時とスクロール時の値を別々に記録します。GPU/ドライバーとプロセス数を添え、CPUメモリへ足しません。値を取得できない環境では「取得不可」とし、0として扱いません。プロセスごとの合算は物理GPUメモリの正確な増分とは限りません。
+`measure.ps1`はWindowsの`Win32_PerfFormattedData_GPUPerformanceCounters_GPUProcessMemory`から、ホストと子孫PIDの`DedicatedUsage`と`SharedUsage`を合算します。約1秒ごとのCSVにCPUメモリと別の列で記録し、30秒間の中央値と最大値を残します。対応するPIDのカウンターがないサンプルは空欄とし、0として扱いません。GPU/ドライバーとプロセス数を添えます。プロセスごとの合算は物理GPUメモリの正確な増分とは限りません。
 
 ## 採用の判断
 

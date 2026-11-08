@@ -17,7 +17,7 @@ probes/servo/       Servoのウィンドウ・描画・入力
 probes/blitz/       Dioxus Nativeの画面
 probes/webview2/    wryによるWindows比較版
 ui/                共通CSS、Servo/WebView2用HTMLとJS
-scripts/measure.ps1 プロセス群のメモリとCPUをCSVに記録
+scripts/measure.ps1 プロセス群のメモリ、CPU、GPUメモリをCSVに記録
 docs/              比較手順、検証結果
 measurements/      実測結果の記録先
 ```
