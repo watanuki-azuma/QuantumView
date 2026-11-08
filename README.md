@@ -34,7 +34,10 @@ rustup toolchain install stable-x86_64-pc-windows-msvc --profile minimal
 
 Rust 1.99.1で依存関係を解決しました。エンジンの直接依存は完全一致の版指定、推移依存は各`Cargo.lock`で固定しています。Servo 0.7.0公式の基準ツールチェーンは1.97.1ですが、このロックファイル全体を1.97.1では検証していません。全構成の検証状況は[検証記録](docs/validation.md)を確認してください。
 
-WindowsのOpenGL初期化で起きたパニックを直すため、`servo-paint-api 0.7.0`だけを`probes/servo/vendor/`に置き、[Servo公式の初期化順序の修正](https://github.com/servo/servo/commit/16e4b1591e1fa4a47016643e34d4f259185c5f2f)を適用しています。エンジンの版と描画方式は維持しています。
+公開クレートへの修正は`probes/servo/vendor/`へ置き、Cargoのパッチで適用しています。エンジンの版と描画方式は維持しています。
+
+- `servo-paint-api 0.7.0`: WindowsのOpenGL初期化パニックに対する[Servo公式の初期化順序の修正](https://github.com/servo/servo/commit/16e4b1591e1fa4a47016643e34d4f259185c5f2f)。
+- `servo-script 0.7.0`: 未確定文字をBackspaceで空にした際、その更新が無視されて表示が残る問題への[1ファイルの修正](probes/servo/vendor/servo-script/README.quantumview.md)。
 
 LLVMの標準インストール先が`C:\Program Files\LLVM`の場合、リポジトリのルートで以下を実行します。Pythonの実体がPATHに含まれていることも確認してください。各アプリは1つずつ起動します。
 
@@ -49,7 +52,7 @@ cargo +stable-x86_64-pc-windows-msvc run --release --locked --manifest-path prob
 
 WebView2版には[WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)が必要です。GNU向けビルドでは、取得済み`webview2-com-sys`クレートの`x64/WebView2Loader.dll`も実行ファイルの隣に配置します（MSVC版は静的リンク）。ServoとWebView2はソースツリー内の`ui/index.html`を`file://`で読みます。実行ファイルだけの配布にはまだ対応していません。
 
-[操作と性能の比較手順](docs/comparison.md)に従い、[実測表](measurements/README.md)へ記録してください。固定したMSVC release実行ファイルで、各構成3回のアイドル時メモリ・CPU・GPUメモリを測定済みです。描画の同等性、日本語IMEとスクロール負荷は未確認のため、採用の判断は保留しています。
+[操作と性能の比較手順](docs/comparison.md)に従い、[実測表](measurements/README.md)へ記録してください。固定したMSVC release実行ファイルで、各構成3回のアイドル時メモリ・CPU・GPUメモリを測定済みです。後続のServo修正版では、日本語変換・取消・連続入力・未確定文字のBackspaceとCtrl+C/Vの実機確認を得ています。描画の同等性、スクロールの操作感と負荷などは確認が残るため、採用の判断は保留しています。
 
 IPC、保存、画面遷移、エンジン切り替え、フォールバック、プラグイン、クラッシュ復旧は実装していません。入力・描画と実測の結果から構成を選んだ後に、必要な機能だけ追加します。
 

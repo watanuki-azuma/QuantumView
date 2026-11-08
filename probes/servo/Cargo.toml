@@ -13,3 +13,4 @@ winit = "=0.30.13"
 
 [patch.crates-io]
 servo-paint-api = { path = "vendor/servo-paint-api" }
+servo-script = { path = "vendor/servo-script" }
