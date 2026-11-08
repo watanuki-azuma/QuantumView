@@ -1,6 +1,6 @@
 # QuantumView
 
-ChromiumやOS標準WebViewに依存せず、HTML/CSSのローカルUIをアプリへ組み込める、小さなWebView代替ホストを目指します。現在はServoとBlitzを確かめる最初の試作で、採用エンジンはまだ決めていません。
+ChromiumやOS標準WebViewに依存せず、HTML/CSS/JavaScriptのローカルUIをアプリへ組み込める、小さなWebView代替ホストを目指します。Servoを実装候補、WebView2を比較基準として検証しています。
 
 メモアプリを実用サンプルとして成立させ、その実装で必要な描画・入力・ホスト連携だけを切り出します。メモと別の最小画面で同じホストを利用できるところまでを[ロードマップ](docs/roadmap.md)に記載しています。
 
@@ -9,14 +9,12 @@ ChromiumやOS標準WebViewに依存せず、HTML/CSSのローカルUIをアプ�
 | 実行ファイル | 描画 | UIロジック | 用途 |
 | --- | --- | --- | --- |
 | `quantumview-servo` | Servo 0.7.0 / WebRender | ローカルHTML/CSS/JS | 候補 |
-| `quantumview-blitz` | Blitz / Vello（Dioxus Native 0.7.10） | Rust / Dioxus | 候補 |
 | `quantumview-webview2` | Windows WebView2（Chromium） | Servoと同じHTML/CSS/JS | 比較基準 |
 
-3つは独立した小さなCargoプロジェクトです。エンジン固有の入力処理を比較するため、それぞれ直接起動します。依存関係の解決を分離することで、BlitzやWebView2だけのビルドでServoを取得する必要もありません。共通にするのは画面のCSSと比較手順だけです。
+2つは独立した小さなCargoプロジェクトで、同じHTML/CSS/JavaScriptを表示します。エンジン固有の入力処理を比較するため、それぞれ直接起動します。WebView2だけをビルドする場合はServoの取得は不要です。
 
 ```text
 probes/servo/       Servoのウィンドウ・描画・入力
-probes/blitz/       Dioxus Nativeの画面
 probes/webview2/    wryによるWindows比較版
 ui/                共通CSS、Servo/WebView2用HTMLとJS
 scripts/measure.ps1 プロセス群のメモリ、CPU、GPUメモリをCSVに記録
@@ -46,11 +44,10 @@ $env:LIBCLANG_PATH = 'C:\Program Files\LLVM\bin'
 $env:CC = 'clang-cl'
 $env:CXX = 'clang-cl'
 cargo +stable-x86_64-pc-windows-msvc run --release --locked --manifest-path probes/servo/Cargo.toml
-cargo +stable-x86_64-pc-windows-msvc run --release --locked --manifest-path probes/blitz/Cargo.toml
 cargo +stable-x86_64-pc-windows-msvc run --release --locked --manifest-path probes/webview2/Cargo.toml
 ```
 
-WebView2版には[WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)が必要です。GNU向けビルドでは、取得済み`webview2-com-sys`クレートの`x64/WebView2Loader.dll`も実行ファイルの隣に配置します（MSVC版は静的リンク）。ServoとWebView2はソースツリー内の`ui/index.html`を`file://`で読みます。実行ファイルだけの配布にはまだ対応していません。BlitzはCSSをビルド時に取り込むので、CSS変更後は再ビルドします。
+WebView2版には[WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)が必要です。GNU向けビルドでは、取得済み`webview2-com-sys`クレートの`x64/WebView2Loader.dll`も実行ファイルの隣に配置します（MSVC版は静的リンク）。ServoとWebView2はソースツリー内の`ui/index.html`を`file://`で読みます。実行ファイルだけの配布にはまだ対応していません。
 
 [操作と性能の比較手順](docs/comparison.md)に従い、[実測表](measurements/README.md)へ記録してください。固定したMSVC release実行ファイルで、各構成3回のアイドル時メモリ・CPU・GPUメモリを測定済みです。描画の同等性、日本語IMEとスクロール負荷は未確認のため、採用の判断は保留しています。
 
@@ -59,5 +56,4 @@ IPC、保存、画面遷移、エンジン切り替え、フォールバック�
 ## 実装で参照した公式コード
 
 - [Servo 0.7.0の最小winitサンプル](https://github.com/servo/servo/blob/v0.7.0/components/servo/examples/winit_minimal.rs)。派生したServoホストのファイルはMPL-2.0です。
-- [Dioxus Native 0.7.10](https://github.com/DioxusLabs/dioxus/tree/v0.7.10/packages/native)。ネイティブ描画の`launch_cfg`を使用します。
 - [wry 0.57.1](https://docs.rs/wry/0.57.1/wry/)。WindowsではWebView2を使用します。
