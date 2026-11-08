@@ -1,0 +1,20 @@
+[
+  {
+    "Name": "quantumview-servo.exe",
+    "Bytes": 114664960,
+    "Sha256": "F00F3AF15DBE2C7C6E36FEF1352D7081F4CDE9BD439FA457EE9A4843F130BB61",
+    "SourceCommit": "80b45e15cbbf583cc57390f8855e1d297744481f"
+  },
+  {
+    "Name": "quantumview-blitz.exe",
+    "Bytes": 21239808,
+    "Sha256": "99F89E81F3F4108E5917B5B0B16634B884C09F3D2A91CB1DE3D438E7F82D6880",
+    "SourceCommit": "80b45e15cbbf583cc57390f8855e1d297744481f"
+  },
+  {
+    "Name": "quantumview-webview2.exe",
+    "Bytes": 1044480,
+    "Sha256": "E17D944EAFD061FA1FC3B62F250E01258AD8024DA6E30046757DB9DF8EFF829D",
+    "SourceCommit": "80b45e15cbbf583cc57390f8855e1d297744481f"
+  }
+]

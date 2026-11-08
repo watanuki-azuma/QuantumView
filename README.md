@@ -50,7 +50,7 @@ cargo +stable-x86_64-pc-windows-msvc run --release --locked --manifest-path prob
 
 WebView2版には[WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)が必要です。GNU向けビルドでは、取得済み`webview2-com-sys`クレートの`x64/WebView2Loader.dll`も実行ファイルの隣に配置します（MSVC版は静的リンク）。ServoとWebView2はソースツリー内の`ui/index.html`を`file://`で読みます。実行ファイルだけの配布にはまだ対応していません。BlitzはCSSをビルド時に取り込むので、CSS変更後は再ビルドします。
 
-[操作と性能の比較手順](docs/comparison.md)に従い、[実測表](measurements/README.md)へ記録してください。現時点では日本語IMEの実機結果と性能比較は未確定です。
+[操作と性能の比較手順](docs/comparison.md)に従い、[実測表](measurements/README.md)へ記録してください。固定したMSVC release実行ファイルで、各構成3回のアイドル時メモリ・CPU・GPUメモリを測定済みです。描画の同等性、日本語IMEとスクロール負荷は未確認のため、採用の判断は保留しています。
 
 IPC、保存、画面遷移、エンジン切り替え、フォールバック、プラグイン、クラッシュ復旧は実装していません。入力・描画と実測の結果から構成を選んだ後に、必要な機能だけ追加します。
 
