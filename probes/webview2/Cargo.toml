@@ -1,0 +1,10 @@
+[package]
+name = "quantumview-webview2"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+winit = "=0.30.13"
+wry = { version = "=0.57.1", default-features = false, features = ["os-webview"] }
+url = "=2.5.8"
