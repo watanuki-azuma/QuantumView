@@ -833,6 +833,14 @@ impl WebViewRenderer {
         if delta == [0.0; 2] {
             return;
         }
+        if crate::wheel_scroll::trace_enabled() {
+            eprintln!(
+                "[wheel-trace] start_wheel_scroll: device_delta=({:.2}, {:.2}) existing_motion={}",
+                delta[0],
+                delta[1],
+                self.wheel_scroll.is_some()
+            );
+        }
         let now = Instant::now();
         let motion = match self.wheel_scroll.take() {
             Some((mut motion, old_point)) if old_point == point => {
@@ -982,6 +990,15 @@ impl WebViewRenderer {
                 combined_event.scroll_type,
             )
         });
+        if crate::wheel_scroll::trace_enabled() {
+            match &scroll_result {
+                Some(result) => eprintln!(
+                    "[wheel-trace] applied: new_offset=({:.2}, {:.2})",
+                    result.offset.x, result.offset.y
+                ),
+                None => eprintln!("[wheel-trace] applied: none"),
+            }
+        }
         if let Some(ref scroll_result) = scroll_result {
             self.send_scroll_positions_to_layout_for_pipeline(
                 scroll_result.hit_test_result.pipeline_id,
@@ -1308,6 +1325,16 @@ impl WebViewRenderer {
             if wheel_event.delta.mode == WheelMode::DeltaLine {
                 // Preserve the host's existing 40 logical pixels per line.
                 let line_size = 40.0 * self.hidpi_scale_factor.0;
+                if crate::wheel_scroll::trace_enabled() {
+                    eprintln!(
+                        "[wheel-trace] accepted line wheel: lines=({:.2}, {:.2}) \
+                         line_size={line_size:.2} device_delta=({:.2}, {:.2})",
+                        wheel_event.delta.x,
+                        wheel_event.delta.y,
+                        scroll_delta.x * line_size,
+                        scroll_delta.y * line_size
+                    );
+                }
                 let point = wheel_event
                     .point
                     .as_device_point(self.device_pixels_per_page_pixel());

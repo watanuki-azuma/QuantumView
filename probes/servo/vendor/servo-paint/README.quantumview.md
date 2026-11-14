@@ -17,3 +17,10 @@ Only `lib.rs` and `webview_renderer.rs` differ from the published Rust files.
 it has no external dependencies and can be tested directly with rustc.
 The full crate is present because Cargo patches apply at package level.
 No engine version, dependency version or public API is added or changed.
+
+For diagnosing the reported scroll-distance shortfall, `webview_renderer.rs`
+and `wheel_scroll.rs` also carry an opt-in trace: with the environment
+variable `QUANTUMVIEW_WHEEL_TRACE=1`, the accepted wheel request, every
+interpolation step and the applied scroll offset are written to stderr with
+the prefix `[wheel-trace]`. It is off by default and changes no behaviour.
+See `docs/wheel-trace.md` in the repository for how to capture and read it.

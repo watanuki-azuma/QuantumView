@@ -236,6 +236,14 @@ impl ApplicationHandler<Wake> for App {
                         (delta.x, delta.y, WheelMode::DeltaPixel)
                     }
                 };
+                if std::env::var_os("QUANTUMVIEW_WHEEL_TRACE").is_some_and(|value| value == "1") {
+                    let mode_name = match &mode {
+                        WheelMode::DeltaLine => "line",
+                        WheelMode::DeltaPixel => "pixel",
+                        _ => "other",
+                    };
+                    eprintln!("[wheel-trace] host wheel: mapped=({x}, {y}, {mode_name})");
+                }
                 webview.notify_input_event(InputEvent::Wheel(WheelEvent::new(
                     WheelDelta { x, y, z: 0.0, mode },
                     state.mouse_position.into(),

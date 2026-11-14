@@ -6,6 +6,16 @@ use std::time::{Duration, Instant};
 
 const DURATION: Duration = Duration::from_millis(120);
 
+/// Whether wheel tracing is enabled with QUANTUMVIEW_WHEEL_TRACE=1.
+/// Used only to account for scroll distance on a real machine; off by default
+/// and never changes behaviour.
+pub(crate) fn trace_enabled() -> bool {
+    static ENABLED: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *ENABLED.get_or_init(|| {
+        std::env::var_os("QUANTUMVIEW_WHEEL_TRACE").is_some_and(|value| value == "1")
+    })
+}
+
 /// The remaining distance of a discrete wheel input, eased out over a short duration.
 pub(crate) struct WheelScroll {
     remaining: [f32; 2],
@@ -32,6 +42,12 @@ impl WheelScroll {
         }
         self.last_frame = now;
         self.end = now + DURATION;
+        if trace_enabled() {
+            eprintln!(
+                "[wheel-trace] add: delta=({:.2}, {:.2}) remaining=({:.2}, {:.2})",
+                delta[0], delta[1], self.remaining[0], self.remaining[1]
+            );
+        }
     }
 
     pub(crate) fn advance(&mut self, now: Instant) -> [f32; 2] {
@@ -49,6 +65,17 @@ impl WheelScroll {
         let delta = self.remaining.map(|remaining| remaining * fraction);
         for (remaining, step) in self.remaining.iter_mut().zip(delta) {
             *remaining -= step;
+        }
+        if trace_enabled() {
+            eprintln!(
+                "[wheel-trace] advance: fraction={fraction:.3} step=({:.2}, {:.2}) \
+                 remaining=({:.2}, {:.2}) finished={}",
+                delta[0],
+                delta[1],
+                self.remaining[0],
+                self.remaining[1],
+                self.finished(now)
+            );
         }
         delta
     }
