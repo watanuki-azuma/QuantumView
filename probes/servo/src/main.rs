@@ -41,6 +41,61 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+/// Lines (vertical) and characters (horizontal) scrolled per wheel notch,
+/// following the Windows mouse setting.
+///
+/// winit converts WM_MOUSEWHEEL to LineDelta at one line per notch and does
+/// not apply the system setting (three lines by default), which made one
+/// notch request only a third of the travel other Windows hosts produce.
+/// Queried per wheel event so setting changes take effect immediately;
+/// wheel events are infrequent enough that the query cost does not matter.
+#[cfg(windows)]
+fn wheel_scroll_lines() -> (f64, f64) {
+    const SPI_GETWHEELSCROLLLINES: u32 = 0x0068;
+    const SPI_GETWHEELSCROLLCHARS: u32 = 0x006C;
+    // WHEEL_PAGESCROLL means one page per notch. Page scrolling is out of
+    // scope here, so it falls back to the default like any unusable value.
+    const WHEEL_PAGESCROLL: u32 = u32::MAX;
+    // The Windows default, used when the setting cannot be read.
+    const DEFAULT_LINES: f64 = 3.0;
+
+    unsafe extern "system" {
+        fn SystemParametersInfoW(
+            ui_action: u32,
+            ui_param: u32,
+            pv_param: *mut std::ffi::c_void,
+            f_win_ini: u32,
+        ) -> i32;
+    }
+
+    fn query(action: u32) -> f64 {
+        let mut value: u32 = 0;
+        let ok = unsafe {
+            SystemParametersInfoW(
+                action,
+                0,
+                &mut value as *mut u32 as *mut std::ffi::c_void,
+                0,
+            )
+        };
+        if ok != 0 && value != 0 && value != WHEEL_PAGESCROLL {
+            f64::from(value)
+        } else {
+            DEFAULT_LINES
+        }
+    }
+
+    (
+        query(SPI_GETWHEELSCROLLLINES),
+        query(SPI_GETWHEELSCROLLCHARS),
+    )
+}
+
+#[cfg(not(windows))]
+fn wheel_scroll_lines() -> (f64, f64) {
+    (1.0, 1.0)
+}
+
 struct App {
     waker: Waker,
     state: Option<State>,
@@ -230,7 +285,14 @@ impl ApplicationHandler<Wake> for App {
                 // Keep discrete line input separate from a trackpad's pixel input.
                 let (x, y, mode) = match delta {
                     MouseScrollDelta::LineDelta(x, y) => {
-                        (f64::from(x), f64::from(y), WheelMode::DeltaLine)
+                        // winit reports one notch as one line; scale by the
+                        // system wheel setting like other Windows hosts do.
+                        let (lines, chars) = wheel_scroll_lines();
+                        (
+                            f64::from(x) * chars,
+                            f64::from(y) * lines,
+                            WheelMode::DeltaLine,
+                        )
                     }
                     MouseScrollDelta::PixelDelta(delta) => {
                         (delta.x, delta.y, WheelMode::DeltaPixel)
@@ -242,7 +304,9 @@ impl ApplicationHandler<Wake> for App {
                         WheelMode::DeltaPixel => "pixel",
                         _ => "other",
                     };
-                    eprintln!("[wheel-trace] host wheel: mapped=({x}, {y}, {mode_name})");
+                    eprintln!(
+                        "[wheel-trace] host wheel: raw={delta:?} mapped=({x}, {y}, {mode_name})"
+                    );
                 }
                 webview.notify_input_event(InputEvent::Wheel(WheelEvent::new(
                     WheelDelta { x, y, z: 0.0, mode },
